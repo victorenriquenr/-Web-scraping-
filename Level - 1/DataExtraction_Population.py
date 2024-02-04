@@ -2,7 +2,7 @@
 ==================================
 'ScrapePopulation' by V.E Núñez
 ==================================
-Objective: Extract world population data for the last 5 years.
+Objective: Population data extraction for the last years.
 
 LAST EDITED: January 27 - 2024
 '''
