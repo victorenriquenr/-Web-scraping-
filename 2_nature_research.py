@@ -1,6 +1,6 @@
-#! Scrape a Nature
+#! Scraping Nature
 #!
-#! Objetivos: Extraer data de artículos en Nature.com
+#! Objectives: Extracting data from articles on Nature.com
 #!
 #! Víctor Núñez
 #!---------------------------------------------------------------------
