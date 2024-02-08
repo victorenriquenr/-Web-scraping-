@@ -18,7 +18,6 @@ from lxml import html
 import re 
 
 
-
 #----------------------------------------------------------------------
 
 class Nature_Articles(Item):
