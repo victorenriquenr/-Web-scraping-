@@ -1,10 +1,10 @@
 '''
 ==================================
-'ScrapePopulation' by V.E Núñez
-==================================
 Objective: Population data extraction for the last years.
 
+V.E Núñez
 LAST EDITED: January 27 - 2024
+==================================
 '''
 
 
