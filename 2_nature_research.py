@@ -1,83 +1,110 @@
-#! Scraping Nature
-#! Objectives: Extracting data from articles on Nature.com
-#!
-#! @author: Víctor Núñez
-#! LAST EDITED: February 07 - 2024
-#!---------------------------------------------------------------------
+# Scraping Nature_Physics
+#
+# Author: Víctor Núñez
+# Date: 24-04-2024
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%abstract%%%%%%%%%%%%%%%%%%%%%%
 
 
+
+# Libraries
 import requests
-from bs4 import BeautifulSoup 
-from scrapy.item import Field, Item
-from scrapy.linkextractors import LinkExtractor
-from scrapy.spiders import CrawlSpider, Rule
-from scrapy.crawler import CrawlerProcess
-from lxml import html
-import re 
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+import re
+import time
+import pandas as pd
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# The Magic
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-#----------------------------------------------------------------------
+start = time.time()
+headers = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+}
 
-class Nature_Articles(Item):
-    journal_id = Field()
-    source = Field()
-    title = Field()
-    doi = Field()
-    subject_1 = Field()
-    subject_2 = Field()
-    publicationDate = Field()
-    numberPages = Field()
-    altmetric_score = Field()
-    #tweeters = Field()
+class Content:
+    def __init__(self, title, abstract, doi, citations, accesses, online_attention, published_datetime):
+        self.title = title
+        self.abstract = abstract
+        self.doi = doi
+        self.citations = citations
+        self.accesses = accesses
+        self.online_attention = online_attention
+        self.published_datetime = published_datetime
 
-class NatureSpider(CrawlSpider):
-    name = 'natureSpider'
-    custom_settings = { 'USER_AGENT': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
-                       'CLOSESPIDER_PAGECOUNT': 10000,
-                       'FEEDS': {'NatureArticles.csv': {'format': 'csv'}}
-    }
+    def to_dataframe(self):
+        
+        df = {'title': self.title,
+              'abstract': self.abstract,
+              'doi': self.doi,
+              'citations' : self.citations,
+              'accesses' : self.accesses,
+              'online_attention' : self.online_attention,
+              'published_datetime': self.published_datetime
+             }
+        return pd.DataFrame(df)
+
+
+
+def getSoup(url):
+    req =  requests.get(url, headers =  headers)
+    soup = BeautifulSoup(req.content, 'html.parser')
+    time.sleep(1)
+    return soup
+
+def InternalLinks(url):
+    soup =  getSoup(url)
+    InternalLinks = ['https://www.nature.com'+ x.get('href') for x in soup.find_all('a', href = re.compile('/articles/'))]
+    return InternalLinks
+
+def Scrape(numPage): 
+    title = []; abstract = []; doi = [] ; citations = []; accesses= []
+    online_attention = []; published_datetime = []
+
+    for page in range(1, numPage+1):
+        count = 1
+        URL = 'https://www.nature.com/nphys/research-articles?searchType=journalSearch&sort=PubDate&page='+str(count)
+        links = InternalLinks(URL)
+        for element in links:
+            soup = getSoup(element) 
+            title.append(soup.find('h1').get_text())
+            abstract.append(soup.find('div', class_="c-article-section__content", id="Abs1-content").get_text())
+            doi = soup.find('meta', attrs={"name": "citation_doi"})["content"]
+            published_datetime.append(soup.find('time').get_text())
+            
+            metrics_details = soup.find('div', class_="c-article-metrics-bar__wrapper u-clear-both").get_text().split()
+            if 'Citations' in metrics_details:
+                i = metrics_details.index('Citations')
+                citations.append(metrics_details[i-1])
+            else:
+                citations.append(0)
+            
+            if 'Accesses' in metrics_details:
+                i = metrics_details.index('Accesses')
+                accesses.append(metrics_details[i-1])
+            else: 
+                accesses.append(0)
+            
+            if 'Altmetric' in metrics_details:
+                i = metrics_details.index('Altmetric')
+                online_attention.append(metrics_details[i-1])
+            else: 
+                online_attention.append(0)
+        count += 1
     
-    allowed_domains = ['nature.com']
-    start_urls = ['https://www.nature.com/nature/research-articles']
-    download_delay = 2
+            
+    return Content(title, abstract, doi, citations, accesses, online_attention, published_datetime)
     
-    rules = [Rule(LinkExtractor(allow = re.compile('^(.*)(/articles/)(?!.*figures)(?!.*tables)(.*)$')),
-                  follow=True,
-                  callback='parse_nature')]
-    
-    def parse_nature(self,response):
-        bs = BeautifulSoup(response.text, 'html.parser')
-        item = Nature_Articles()
-        
-        try:  
-            item['journal_id'] = bs.find('meta', {'name':'journal_id'}).get('content')
-            item['source']  = bs.find('meta',{'name':'dc.source'}).get('content')
-            item['title']   = bs.find('meta', {'name':'dc.title'}).get('content')
-            item['doi']     = bs.find('meta', {'name':'DOI'}).get('content')
-            item['subject_1'] = bs.find_all('meta', {'name':'dc.subject'})[0].get('content')
-            item['subject_2'] = bs.find_all('meta', {'name':'dc.subject'})[1].get('content')
-            item['publicationDate'] = bs.find('meta', {'name':'prism.publicationDate'}).get('content')
-            startingPag = int(bs.find('meta', {'name':'prism.startingPage'}).get('content'))
-            endingPage  = int(bs.find('meta', {'name':'prism.endingPage'}).get('content'))
-            item['numberPages'] = endingPage-startingPag
-            item['altmetric_score'] = bs.find('p',class_="c-article-metrics-bar__count").get_text().replace('Altmetric','').strip()
-        except:
-            None
-        
-        #Metrics
-        #metric_url = 'https://www.nature.com'+bs.find_all('a', href = re.compile('^/articles(.*/metrics)$'))[0].get('href')
-        #headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",}
-        #req = requests.get(metric_url, headers = headers)
-        #req.encoding= 'utf-8'
-        #parser_metric = html.fromstring(req.content)
-        
-        #item['altmetric_score']= parser_metric.xpath('//div[@class="c-article-metrics__image"]/img/@alt')[0].replace('Altmetric score', '')
-        #item['tweeters'] = parser_metric.xpath('//div[@class="c-article-metrics__legend"]/ul/li/span/text()')[0].replace('tweeters','')
-        
-        return item
-  
 
-#Start
-process = CrawlerProcess()
-process.crawl(NatureSpider)
-process.start()
+content = Scrape(1) # Choose the number of pages to scrape.
+df = content.to_dataframe()
+print('Extraction complete')
+
+df.to_csv('./dataset.csv')
+
+
+end = time.time()
+total_time = end - start
+print("Total time: {:.2f} seconds".format(total_time))
