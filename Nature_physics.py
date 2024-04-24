@@ -102,7 +102,7 @@ content = Scrape(1) # Choose the number of pages to scrape.
 df = content.to_dataframe()
 print('Extraction complete')
 
-df.to_csv('./dataset.csv', index =  False, header =  True)
+df.to_csv('./dataset_phys.csv', index =  False, header =  True)
 
 
 end = time.time()
