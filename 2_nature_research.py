@@ -62,9 +62,9 @@ def InternalLinks(url):
 def Scrape(numPage): 
     title = []; abstract = []; doi = [] ; citations = []; accesses= []
     online_attention = []; published_datetime = []
+    count = 1
 
     for page in range(1, numPage+1):
-        count = 1
         URL = 'https://www.nature.com/nphys/research-articles?searchType=journalSearch&sort=PubDate&page='+str(count)
         links = InternalLinks(URL)
         for element in links:
