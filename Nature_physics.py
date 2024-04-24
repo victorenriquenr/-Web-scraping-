@@ -70,7 +70,7 @@ def Scrape(numPage):
         for element in links:
             soup = getSoup(element) 
             title.append(soup.find('h1').get_text())
-            abstract.append(soup.find('div', class_="c-article-section__content", id="Abs1-content").get_text())
+            abstract.append(soup.find('meta', attrs={"name": "description"})["content"])
             doi.append('https://doi.org/'+soup.find('meta', attrs={"name": "citation_doi"})["content"])
             published_datetime.append(soup.find('time').get_text())
             
@@ -102,6 +102,7 @@ content = Scrape(1) # Choose the number of pages to scrape.
 df = content.to_dataframe()
 print('Extraction complete')
 
+df['Topic'] = 'Physics'
 df.to_csv('./dataset_phys.csv', index =  False, header =  True)
 
 
