@@ -71,7 +71,7 @@ def Scrape(numPage):
             soup = getSoup(element) 
             title.append(soup.find('h1').get_text())
             abstract.append(soup.find('div', class_="c-article-section__content", id="Abs1-content").get_text())
-            doi = soup.find('meta', attrs={"name": "citation_doi"})["content"]
+            doi.append('https://doi.org/'+soup.find('meta', attrs={"name": "citation_doi"})["content"])
             published_datetime.append(soup.find('time').get_text())
             
             metrics_details = soup.find('div', class_="c-article-metrics-bar__wrapper u-clear-both").get_text().split()
@@ -102,7 +102,7 @@ content = Scrape(1) # Choose the number of pages to scrape.
 df = content.to_dataframe()
 print('Extraction complete')
 
-df.to_csv('./dataset.csv')
+df.to_csv('./dataset.csv', index =  False, header =  True)
 
 
 end = time.time()
