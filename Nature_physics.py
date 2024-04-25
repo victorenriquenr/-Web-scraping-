@@ -89,7 +89,7 @@ def Scrape(numPage):
         for element in links:
             soup = getSoup(element) 
             title.append(soup.find('h1').get_text())
-            abstract.append(soup.find('div', class_="c-article-section__content", id="Abs1-content").get_text())
+            abstract.append(soup.find('meta', attrs={"name": "description"})["content"])
             doi.append('https://doi.org/'+soup.find('meta', attrs={"name": "citation_doi"})["content"])
             
             published_datetime.append(soup.find('time').get_text())
