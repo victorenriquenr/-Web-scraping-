@@ -7,7 +7,6 @@
 # Libraries
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
 import re
 import time
 import pandas as pd
