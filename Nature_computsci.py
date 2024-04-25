@@ -96,7 +96,11 @@ def Scrape(numPage):
             
             published_datetime.append(soup.find('time').get_text())
             
-            metrics_details = soup.find('div', class_="c-article-metrics-bar__wrapper u-clear-both").get_text().split()
+            try:
+                metrics_details = soup.find('div', class_="c-article-metrics-bar__wrapper u-clear-both").get_text().split()
+            except:
+                metrics_details = []
+                
             if 'Citations' in metrics_details:
                 i = metrics_details.index('Citations')
                 citations.append(metrics_details[i-1])
