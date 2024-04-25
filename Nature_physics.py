@@ -3,6 +3,7 @@
 # Author: Víctor Núñez
 # Date: 24-04-2024
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 # Libraries
 import requests
 from bs4 import BeautifulSoup
